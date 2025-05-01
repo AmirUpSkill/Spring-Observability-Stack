@@ -2,33 +2,38 @@ package com.amir.loan_service.service;
 
 import java.util.List;
 
-import com.amir.loan_service.dto.LoanDto;
+import org.springframework.stereotype.Service;
 
+import com.amir.loan_service.client.FraudDetectionClient;
+import com.amir.loan_service.dto.LoanDto;
+import com.amir.loan_service.entity.Loan;
+import com.amir.loan_service.entity.LoanStatus;
 import com.amir.loan_service.reponsitory.LoanRepository;
 
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
 public class LoanService {
 
+    private final FraudDetectionClient fraudDetectionClient;
     private final LoanRepository loanRepository;
 
-    /*  Retrives all the Loans  */
-    public List<LoanDto> listAllLoan(){
+    public List<LoanDto> listAllLoans() {
         return loanRepository.findAll()
                 .stream()
                 .map(LoanDto::from)
-               .toList();
-
+                .toList();
     }
 
-    public String applyLoan(LoanDto loanDto){
-        var loan = LoanDto.from(loanDto);
-        /* Check the status of the loan which will be implemented inside the Fraud Detection Service later  */
-
-        loan.setLoanStatus(LoanStatus);
-        if (loanStatus.equals(LoanStatus.APPROVED)){
+    public String applyLoan(LoanDto loanDto) {
+        var loan = Loan.from(loanDto);
+        LoanStatus loanStatus = fraudDetectionClient.evaluateLoan(loan.getCustomerId());
+        loan.setLoanStatus(loanStatus);
+        if (loanStatus.equals(LoanStatus.APPROVED)) {
             loanRepository.save(loan);
-            return "Loan Applied Successfully" ;
+            return "Loan applied successfully";
         }
-        return "Sorry ! Your loan was not approved ";
+        return "Sorry! Your loan was not approved";
     }
-
 }
